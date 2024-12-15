@@ -8,6 +8,8 @@
 
 // Параметры сферы
 const float radius = 1.0f; // Радиус сферы
+const int N = 15; //Кол-во разбиений
+const bool isGuro = 1; //Делать ли закраску Гуро
 
 // Камера
 float cameraX = 0.0f, cameraY = 0.0f, cameraZ = 5.0f;
@@ -50,9 +52,8 @@ void buildSphere() {
     vertices.clear();
     indices.clear();
 
-    // Шаги для параметризации
-    const int stacks = 4; // Количество горизонтальных делений (широта)
-    const int slices = 4; // Количество вертикальных делений (долгота)
+    const int stacks = N; // Количество горизонтальных делений (широта)
+    const int slices = N; // Количество вертикальных делений (долгота)
 
     for (int i = 0; i <= stacks; ++i) {
         float phi = M_PI * i / stacks; // Угол широты [0, pi]
@@ -98,12 +99,27 @@ void buildSphere() {
 // Рендеринг сферы с использованием закраски Гуро
 void renderSphere() {
     glBegin(GL_TRIANGLES);
-    for (size_t i = 0; i < indices.size(); i += 3) {
-        for (int j = 0; j < 3; ++j) {
-            const Vertex& v = vertices[indices[i + j]];
-            glColor3f(v.intensity, v.intensity, v.intensity); // Устанавливаем цвет вершины
-            glNormal3f(v.nx, v.ny, v.nz);
-            glVertex3f(v.x, v.y, v.z);
+    if (isGuro)
+    {
+        for (size_t i = 0; i < indices.size(); i += 3) { //Для Гуро
+            for (int j = 0; j < 3; ++j) {
+                const Vertex& v = vertices[indices[i + j]];
+                glColor3f(v.intensity, v.intensity, v.intensity); //Устанавливаем цвет вершины
+                glNormal3f(v.nx, v.ny, v.nz); //Устанавливаем нормаль вершины
+                glVertex3f(v.x, v.y, v.z); //Устанавливаем координаты вершины
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < indices.size(); i += 3) { //Без Гуро
+            const Vertex& v0 = vertices[indices[i]]; //Берём первую вершину треугольника для расчёта единого цвета
+            glColor3f(v0.intensity, v0.intensity, v0.intensity); //Используем цвет только одной вершины для всего треугольника
+            for (int j = 0; j < 3; ++j) {
+                const Vertex& v = vertices[indices[i + j]];
+                glNormal3f(v.nx, v.ny, v.nz);
+                glVertex3f(v.x, v.y, v.z);
+            }
         }
     }
     glEnd();
@@ -154,7 +170,7 @@ void keyboard(unsigned char key, int x, int y) {
         cameraAngleHorizontal += lookSpeed;
         break;
     case 'r': // Сброс камеры
-        cameraX = 0.0f, cameraY = 2.0f, cameraZ = 8.0f;
+        cameraX = 0.0f, cameraY = 0.0f, cameraZ = 5.0f;
         cameraAngleHorizontal = 0.0f; cameraAngleVertical = 0.0f;
         reset = true;
         break;
@@ -209,15 +225,12 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("Sphere");
-
+    glutCreateWindow("KG_3");
     initGL();
-
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(keyboardArrows);
-
     glutMainLoop();
     return 0;
 }
