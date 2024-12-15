@@ -8,7 +8,6 @@
 
 // Параметры сферы
 const float radius = 1.0f; // Радиус сферы
-const int numPoints = 999; // Количество точек для решётки Фибоначчи
 
 // Камера
 float cameraX = 0.0f, cameraY = 0.0f, cameraZ = 5.0f;
@@ -48,63 +47,50 @@ float calculateLightIntensity(float nx, float ny, float nz) {
 
 // Построение сферы с использованием решётки Фибоначчи
 void buildSphere() {
-    const float goldenRatio = (1.0f + sqrt(5.0f)) / 2.0f; // Золотое сечение
-    const float angleIncrement = 2.0f * M_PI / goldenRatio; // Угловое смещение
-
     vertices.clear();
     indices.clear();
 
-    // Генерация точек на сфере
-    for (int i = 0; i < numPoints; ++i) {
-        float t = static_cast<float>(i) + 0.5f; // Сдвиг для устранения перекрытия
-        float phi = acos(1 - 2.0f * t / numPoints); // Угол широты
-        float theta = angleIncrement * i;          // Угол долготный
+    // Шаги для параметризации
+    const int stacks = 4; // Количество горизонтальных делений (широта)
+    const int slices = 4; // Количество вертикальных делений (долгота)
 
-        float x = sin(phi) * cos(theta);
-        float y = sin(phi) * sin(theta);
-        float z = cos(phi);
+    for (int i = 0; i <= stacks; ++i) {
+        float phi = M_PI * i / stacks; // Угол широты [0, pi]
+        for (int j = 0; j <= slices; ++j) {
+            float theta = 2 * M_PI * j / slices; // Угол долготы [0, 2*pi]
 
-        // Рассчитываем нормали и интенсивность света
-        float nx, ny, nz;
-        calculateNormal(x, y, z, nx, ny, nz);
-        float intensity = calculateLightIntensity(nx, ny, nz);
+            // Вычисление позиции вершины
+            float x = radius * sin(phi) * cos(theta);
+            float y = radius * cos(phi);
+            float z = radius * sin(phi) * sin(theta);
 
-        // Добавляем вершину в список
-        vertices.push_back({ x, y, z, nx, ny, nz, intensity });
+            // Вычисление нормали
+            float nx, ny, nz;
+            calculateNormal(x, y, z, nx, ny, nz);
+
+            // Интенсивность освещения
+            float intensity = calculateLightIntensity(nx, ny, nz);
+
+            // Добавление вершины
+            vertices.push_back({ x, y, z, nx, ny, nz, intensity });
+        }
     }
 
-    // Создание индексов для триангуляции с ближайшими соседями
-    for (int i = 0; i < numPoints; ++i) {
-        std::priority_queue<std::tuple<float, int>> closestPoints; // Расстояние, индекс
+    // Создание индексов для триангуляции
+    for (int i = 0; i < stacks; ++i) {
+        for (int j = 0; j < slices; ++j) {
+            int first = i * (slices + 1) + j;
+            int second = first + slices + 1;
 
-        for (int j = 0; j < numPoints; ++j) {
-            if (i == j) continue;
-            float dx = vertices[i].x - vertices[j].x;
-            float dy = vertices[i].y - vertices[j].y;
-            float dz = vertices[i].z - vertices[j].z;
-            float distance = dx * dx + dy * dy + dz * dz; // Квадрат расстояния
+            // Треугольник 1
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
 
-            if (closestPoints.size() < 6) {
-                closestPoints.emplace(distance, j);
-            }
-            else if (distance < std::get<0>(closestPoints.top())) {
-                closestPoints.pop();
-                closestPoints.emplace(distance, j);
-            }
-        }
-
-        // Создаём треугольники с ближайшими соседями
-        std::vector<int> neighbors;
-        while (!closestPoints.empty()) {
-            neighbors.push_back(std::get<1>(closestPoints.top()));
-            closestPoints.pop();
-        }
-
-        for (size_t k = 0; k < neighbors.size(); ++k) {
-            int next = neighbors[(k + 1) % neighbors.size()];
-            indices.push_back(i);
-            indices.push_back(neighbors[k]);
-            indices.push_back(next);
+            // Треугольник 2
+            indices.push_back(first + 1);
+            indices.push_back(second);
+            indices.push_back(second + 1);
         }
     }
 }
