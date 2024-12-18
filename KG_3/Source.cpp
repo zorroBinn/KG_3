@@ -6,7 +6,6 @@
 #include <tuple>
 #include <iostream>
 
-//Параметры сферы
 const float radius = 1.0f; //Радиус сферы
 const int N = 10; //Кол-во разбиений
 const bool isGuro = 1; //Делать ли закраску Гуро
@@ -20,15 +19,15 @@ float lookSpeed = 0.04f;
 
 //Структура для хранения данных вершины
 struct Vertex {
-    float x, y, z;       //Координаты вершины
-    float nx, ny, nz;    //Нормали вершины
-    float intensity;     //Интенсивность освещения в вершине
+    float x, y, z; //Координаты вершины
+    float nx, ny, nz; //Нормали вершины
+    float intensity; //Интенсивность освещения в вершине
 };
 
 std::vector<Vertex> vertices; //Список всех вершин
 std::vector<unsigned int> indices; //Индексы для триангуляции
 
-//Вспомогательная функция для расчёта нормали
+//Функция для расчёта нормали
 void calculateNormal(float x, float y, float z, float& nx, float& ny, float& nz) {
     float length = sqrt(x * x + y * y + z * z);
     nx = x / length;
@@ -47,7 +46,7 @@ float calculateLightIntensity(float nx, float ny, float nz) {
     return fmax(0.0f, dotProduct); //Интенсивность от 0 до 1
 }
 
-//Построение сферы с использованием решётки Фибоначчи
+//Построение сферы с триангуляцией и рассчётом освещения каждого участка триангулирования
 void buildSphere() {
     vertices.clear();
     indices.clear();
@@ -129,16 +128,9 @@ void renderSphere() {
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Очистка экрана
     glLoadIdentity(); //Сброс матрицы
-
     //Установка камеры
-    gluLookAt(cameraX, cameraY, cameraZ,
-        cameraX + sin(cameraAngleHorizontal),
-        cameraY + tan(cameraAngleVertical),
-        cameraZ - cos(cameraAngleHorizontal),
-        0.0f, 1.0f, 0.0f);
-
+    gluLookAt(cameraX, cameraY, cameraZ, cameraX + sin(cameraAngleHorizontal), cameraY + tan(cameraAngleVertical), cameraZ - cos(cameraAngleHorizontal), 0.0f, 1.0f, 0.0f);
     renderSphere(); //Рисуем сферу
-
     glutSwapBuffers(); //Обновляем буфер экрана
 }
 
