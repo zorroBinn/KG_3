@@ -6,29 +6,29 @@
 #include <tuple>
 #include <iostream>
 
-// Параметры сферы
-const float radius = 1.0f; // Радиус сферы
-const int N = 15; //Кол-во разбиений
+//Параметры сферы
+const float radius = 1.0f; //Радиус сферы
+const int N = 10; //Кол-во разбиений
 const bool isGuro = 1; //Делать ли закраску Гуро
 
-// Камера
+//Камера
 float cameraX = 0.0f, cameraY = 0.0f, cameraZ = 5.0f;
 float cameraAngleHorizontal = 0.0f;
 float cameraAngleVertical = 0.0f;
 float cameraSpeed = 0.15f;
 float lookSpeed = 0.04f;
 
-// Структура для хранения данных вершины
+//Структура для хранения данных вершины
 struct Vertex {
-    float x, y, z;       // Координаты вершины
-    float nx, ny, nz;    // Нормали вершины
-    float intensity;     // Интенсивность освещения в вершине
+    float x, y, z;       //Координаты вершины
+    float nx, ny, nz;    //Нормали вершины
+    float intensity;     //Интенсивность освещения в вершине
 };
 
-std::vector<Vertex> vertices; // Список всех вершин
-std::vector<unsigned int> indices; // Индексы для триангуляции
+std::vector<Vertex> vertices; //Список всех вершин
+std::vector<unsigned int> indices; //Индексы для триангуляции
 
-// Вспомогательная функция для расчёта нормали
+//Вспомогательная функция для расчёта нормали
 void calculateNormal(float x, float y, float z, float& nx, float& ny, float& nz) {
     float length = sqrt(x * x + y * y + z * z);
     nx = x / length;
@@ -36,59 +36,59 @@ void calculateNormal(float x, float y, float z, float& nx, float& ny, float& nz)
     nz = z / length;
 }
 
-// Функция для расчёта интенсивности света (градации серого)
+//Функция для расчёта интенсивности света (градации серого)
 float calculateLightIntensity(float nx, float ny, float nz) {
-    float lightDir[] = { 0.0f, 0.0f, 1.0f }; // Направление света
+    float lightDir[] = { 0.0f, 0.0f, 1.0f }; //Направление света
     float lightLength = sqrt(lightDir[0] * lightDir[0] + lightDir[1] * lightDir[1] + lightDir[2] * lightDir[2]);
     float normalizedLightDir[] = { lightDir[0] / lightLength, lightDir[1] / lightLength, lightDir[2] / lightLength };
 
-    // Скалярное произведение нормали и направления света
+    //Скалярное произведение нормали и направления света
     float dotProduct = nx * normalizedLightDir[0] + ny * normalizedLightDir[1] + nz * normalizedLightDir[2];
-    return fmax(0.0f, dotProduct); // Интенсивность от 0 до 1
+    return fmax(0.0f, dotProduct); //Интенсивность от 0 до 1
 }
 
-// Построение сферы с использованием решётки Фибоначчи
+//Построение сферы с использованием решётки Фибоначчи
 void buildSphere() {
     vertices.clear();
     indices.clear();
 
-    const int stacks = N; // Количество горизонтальных делений (широта)
-    const int slices = N; // Количество вертикальных делений (долгота)
+    const int stacks = N; //Количество горизонтальных делений (широта)
+    const int slices = N; //Количество вертикальных делений (долгота)
 
     for (int i = 0; i <= stacks; ++i) {
-        float phi = M_PI * i / stacks; // Угол широты [0, pi]
+        float phi = M_PI * i / stacks; //Угол широты [0, pi]
         for (int j = 0; j <= slices; ++j) {
-            float theta = 2 * M_PI * j / slices; // Угол долготы [0, 2*pi]
+            float theta = 2 * M_PI * j / slices; //Угол долготы [0, 2*pi]
 
-            // Вычисление позиции вершины
+            //Вычисление позиции вершины
             float x = radius * sin(phi) * cos(theta);
             float y = radius * cos(phi);
             float z = radius * sin(phi) * sin(theta);
 
-            // Вычисление нормали
+            //Вычисление нормали
             float nx, ny, nz;
             calculateNormal(x, y, z, nx, ny, nz);
 
-            // Интенсивность освещения
+            //Интенсивность освещения
             float intensity = calculateLightIntensity(nx, ny, nz);
 
-            // Добавление вершины
+            //Добавление вершины
             vertices.push_back({ x, y, z, nx, ny, nz, intensity });
         }
     }
 
-    // Создание индексов для триангуляции
+    //Создание индексов для триангуляции
     for (int i = 0; i < stacks; ++i) {
         for (int j = 0; j < slices; ++j) {
             int first = i * (slices + 1) + j;
             int second = first + slices + 1;
 
-            // Треугольник 1
+            //Треугольник 1
             indices.push_back(first);
             indices.push_back(second);
             indices.push_back(first + 1);
 
-            // Треугольник 2
+            //Треугольник 2
             indices.push_back(first + 1);
             indices.push_back(second);
             indices.push_back(second + 1);
@@ -96,7 +96,7 @@ void buildSphere() {
     }
 }
 
-// Рендеринг сферы с использованием закраски Гуро
+//Рендеринг сферы с использованием закраски Гуро
 void renderSphere() {
     glBegin(GL_TRIANGLES);
     if (isGuro)
@@ -125,56 +125,56 @@ void renderSphere() {
     glEnd();
 }
 
-// Дисплей-функция
+//Дисплей-функция
 void display() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Очистка экрана
-    glLoadIdentity(); // Сброс матрицы
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Очистка экрана
+    glLoadIdentity(); //Сброс матрицы
 
-    // Установка камеры
+    //Установка камеры
     gluLookAt(cameraX, cameraY, cameraZ,
         cameraX + sin(cameraAngleHorizontal),
         cameraY + tan(cameraAngleVertical),
         cameraZ - cos(cameraAngleHorizontal),
         0.0f, 1.0f, 0.0f);
 
-    renderSphere(); // Рисуем сферу
+    renderSphere(); //Рисуем сферу
 
-    glutSwapBuffers(); // Обновляем буфер экрана
+    glutSwapBuffers(); //Обновляем буфер экрана
 }
 
-// Обработка клавиш
+//Обработка клавиш
 void keyboard(unsigned char key, int x, int y) {
     float nextX = cameraX, nextY = cameraY, nextZ = cameraZ;
     bool reset = false;
     switch (key) {
-    case 'w': // Вперед
+    case 'w': //Вперед
         nextX += cameraSpeed * sin(cameraAngleHorizontal);
         nextZ -= cameraSpeed * cos(cameraAngleHorizontal);
         break;
-    case 's': // Назад
+    case 's': //Назад
         nextX -= cameraSpeed * sin(cameraAngleHorizontal);
         nextZ += cameraSpeed * cos(cameraAngleHorizontal);
         break;
-    case 'a': // Влево
+    case 'a': //Влево
         nextX -= cameraSpeed * cos(cameraAngleHorizontal);
         nextZ -= cameraSpeed * sin(cameraAngleHorizontal);
         break;
-    case 'd': // Вправо
+    case 'd': //Вправо
         nextX += cameraSpeed * cos(cameraAngleHorizontal);
         nextZ += cameraSpeed * sin(cameraAngleHorizontal);
         break;
-    case 'q': // Поворот влево
+    case 'q': //Поворот влево
         cameraAngleHorizontal -= lookSpeed;
         break;
-    case 'e': // Поворот вправо
+    case 'e': //Поворот вправо
         cameraAngleHorizontal += lookSpeed;
         break;
-    case 'r': // Сброс камеры
+    case 'r': //Сброс камеры
         cameraX = 0.0f, cameraY = 0.0f, cameraZ = 5.0f;
         cameraAngleHorizontal = 0.0f; cameraAngleVertical = 0.0f;
         reset = true;
         break;
-    case 27: // Выход
+    case 27: //Выход
         exit(0);
     }
 
@@ -185,26 +185,26 @@ void keyboard(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-// Обработка стрелок
+//Обработка стрелок
 void keyboardArrows(int key, int x, int y) {
     switch (key) {
-    case GLUT_KEY_UP: // Поднять камеру
+    case GLUT_KEY_UP: //Поднять камеру
         if (cameraY + cameraSpeed <= 4.0f) cameraY += cameraSpeed;
         break;
-    case GLUT_KEY_DOWN: // Опустить камеру
+    case GLUT_KEY_DOWN: //Опустить камеру
         if (cameraY - cameraSpeed >= 0.0f) cameraY -= cameraSpeed;
         break;
-    case GLUT_KEY_LEFT: // Взгляд вверх
+    case GLUT_KEY_LEFT: //Взгляд вверх
         if (cameraAngleVertical + lookSpeed <= M_PI_2) cameraAngleVertical += lookSpeed;
         break;
-    case GLUT_KEY_RIGHT: // Взгляд вниз
+    case GLUT_KEY_RIGHT: //Взгляд вниз
         if (cameraAngleVertical - lookSpeed >= -M_PI_2) cameraAngleVertical -= lookSpeed;
         break;
     }
     glutPostRedisplay();
 }
 
-// Изменение размера окна
+//Изменение размера окна
 void reshape(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -213,11 +213,11 @@ void reshape(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-// Настройка OpenGL
+//Настройка OpenGL
 void initGL() {
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Черный фон
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //Черный фон
     buildSphere();
 }
 
